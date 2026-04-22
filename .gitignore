@@ -1,0 +1,46 @@
+# ===== STM32CubeIDE =====
+Debug/
+Release/
+*.launch
+*.metadata/
+.settings/
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.o
+*.d
+*.su
+.cproject_bak
+
+# ===== CubeMX 자동생성 백업 =====
+*.ioc.bak
+Backup/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*~
+
+# ===== 빌드 =====
+build/
+out/
+*.o
+*.a
+
+# ===== 테스트 =====
+*.gcda
+*.gcno
+*.gcov
+coverage/
+
+# ===== 개인 환경 =====
+.env
+*.local
