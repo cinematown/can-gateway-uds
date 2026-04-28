@@ -1,53 +1,70 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(can_gateway_uds_workspace NONE)
+#
+# This file is generated only once,
+# and is not re-generated if converter is called multiple times.
+#
+# User is free to modify the file as much as necessary
+#
 
+# Setup compiler settings
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
+
+# Define the build type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-set(FIRMWARE_BOARDS
-    board_a_engine
-    board_b_gateway
-    board_c_uds
-    board_d_body
+# Set the project name
+set(CMAKE_PROJECT_NAME stm32f429zi_cli_B)
+
+# Enable compile command to ease indexing with e.g. clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+# Core project settings
+project(${CMAKE_PROJECT_NAME})
+message("Build type: " ${CMAKE_BUILD_TYPE})
+
+# Enable CMake support for ASM and C languages
+enable_language(C ASM)
+
+# Create an executable object type
+add_executable(${CMAKE_PROJECT_NAME})
+
+# Add STM32CubeMX generated sources
+add_subdirectory(cmake/stm32cubemx)
+
+# Link directories setup
+target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    # Add user defined library search paths
 )
 
-foreach(board IN LISTS FIRMWARE_BOARDS)
-    set(board_source_dir ${CMAKE_CURRENT_SOURCE_DIR}/firmware/${board})
-    set(board_binary_dir ${CMAKE_CURRENT_BINARY_DIR}/${board})
-    set(board_toolchain ${board_source_dir}/cmake/gcc-arm-none-eabi.cmake)
-
-    add_custom_target(configure_${board}
-        COMMAND ${CMAKE_COMMAND}
-            -S ${board_source_dir}
-            -B ${board_binary_dir}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-            -DCMAKE_TOOLCHAIN_FILE=${board_toolchain}
-        COMMENT "Configure ${board}"
-        VERBATIM
-    )
-
-    add_custom_target(build_${board}
-        COMMAND ${CMAKE_COMMAND} --build ${board_binary_dir}
-        DEPENDS configure_${board}
-        COMMENT "Build ${board}"
-        VERBATIM
-    )
-endforeach()
-
-add_custom_target(configure_firmware
-    DEPENDS
-        configure_board_a_engine
-        configure_board_b_gateway
-        configure_board_c_uds
-        configure_board_d_body
+# Add sources to executable
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    common/can_bsp.c
+    app/gateway_tasks.c
 )
 
-add_custom_target(build_firmware
-    DEPENDS
-        build_board_a_engine
-        build_board_b_gateway
-        build_board_c_uds
-        build_board_d_body
+# Add include paths
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    common
+    app
+)
+
+# Add project symbols (macros)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+    BOARD_B_GATEWAY
+)
+
+# Remove wrong libob.a library dependency when using cpp files
+list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
+
+# Add linked libraries
+target_link_libraries(${CMAKE_PROJECT_NAME}
+    stm32cubemx
+
+    # Add user defined libraries
 )

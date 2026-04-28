@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "configure-board-d-body-debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset",
+                "Debug",
+                "--fresh",
+                "-S",
+                "firmware/board_d_body"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "build-board-d-body-debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "firmware/board_d_body/build/Debug",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": "configure-board-d-body-debug",
+            "problemMatcher": []
+        }
+    ]
+}
