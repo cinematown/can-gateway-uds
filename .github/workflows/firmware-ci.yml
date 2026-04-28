@@ -36,15 +36,19 @@ jobs:
           test -f common/protocol_ids.h
           test -f docs/VW_Passat_B6.dbc
 
-          for board in board_a_engine board_b_gateway board_c_uds; do
+          for board in board_a_engine board_b_gateway board_c_uds board_d_body; do
             test -f "firmware/${board}/CMakeLists.txt"
             test -f "firmware/${board}/CMakePresets.json"
             test -f "firmware/${board}/${board}.ioc"
             test -d "firmware/${board}/Core"
             test -d "firmware/${board}/Drivers"
             test -d "firmware/${board}/Middlewares"
-            test -d "firmware/${board}/src"
           done
+
+          test -d firmware/board_a_engine/src
+          test -d firmware/board_b_gateway/src
+          test -d firmware/board_c_uds/src
+          test -f firmware/board_d_body/Core/Src/bcm_main.c
 
           test ! -d Core
           test ! -d Drivers
@@ -52,6 +56,7 @@ jobs:
           test ! -d board_a_engine
           test ! -d board_b_gateway
           test ! -d board_c_uds
+          test ! -d board_d_body
 
   unit-build:
     name: Unit build (${{ matrix.board }})
@@ -65,6 +70,7 @@ jobs:
           - board_a_engine
           - board_b_gateway
           - board_c_uds
+          - board_d_body
 
     steps:
       - name: Checkout

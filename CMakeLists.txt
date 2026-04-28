@@ -10,6 +10,7 @@ set(FIRMWARE_BOARDS
     board_a_engine
     board_b_gateway
     board_c_uds
+    board_d_body
 )
 
 foreach(board IN LISTS FIRMWARE_BOARDS)
@@ -40,6 +41,7 @@ add_custom_target(configure_firmware
         configure_board_a_engine
         configure_board_b_gateway
         configure_board_c_uds
+        configure_board_d_body
 )
 
 add_custom_target(build_firmware
@@ -47,4 +49,5 @@ add_custom_target(build_firmware
         build_board_a_engine
         build_board_b_gateway
         build_board_c_uds
+        build_board_d_body
 )

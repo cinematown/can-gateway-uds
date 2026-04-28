@@ -7,7 +7,8 @@
 - [ ] ② 엔진 시뮬 (`firmware/board_a_engine/src`)
 - [ ] ③ 게이트웨이 (`firmware/board_b_gateway/src`)
 - [ ] ④ UDS 서버 (`firmware/board_c_uds/src`)
-- [ ] ⑤ 계기판 (`firmware/board_b_gateway/src/cluster_*`, 추가 예정)
+- [ ] ⑤ Body / BCM (`firmware/board_d_body/Core/Src/bcm_*`)
+- [ ] ⑥ 계기판 (`firmware/board_b_gateway/src/cluster_*`, 추가 예정)
 - [ ] 공통 인터페이스 (`common/signal_db.h`, `common/protocol_ids.h`, `common/can_bsp.h`) ⚠️ 팀장 승인 필수
 - [ ] 문서 (`docs/`, `README.md`)
 - [ ] 빌드 / CubeMX 설정
