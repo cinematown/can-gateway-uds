@@ -41,7 +41,8 @@ void StartDefaultTask(void *argument)
                 }
                 else if (rxMsg.id == CAN_ID_ENGINE_SPEED ||
                          rxMsg.id == CAN_ID_ENGINE_COOLANT ||
-                         rxMsg.id == CAN_ID_ENGINE_KEEPALIVE)
+                         rxMsg.id == CAN_ID_ENGINE_KEEPALIVE ||
+                         rxMsg.id == CAN_ID_BODY_STATUS)
                 {
                     Gateway_ForwardToCan2(&rxMsg);
                 }

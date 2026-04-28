@@ -10,6 +10,8 @@ Code mirror: `common/signal_db.h`
 | 0x288 | Motor_2 | MO2_Kuehlm_T | 8 | 8 | 0.75 | -48 | degC |
 | 0x320 | Kombi_1 | Geschwindigkeit__Kombi_1_ | 25 | 15 | 0.01 | 0 | km/h |
 | 0x420 | Kombi_2 | Kuehlmitteltemp__4_1__Kombi_2_ | 32 | 8 | 0.75 | -48 | degC |
+| 0x470 | Body_Status | turn/door/high/fog bitfield | 0 | 8 | 1 | 0 | bitfield |
+| 0x300 | IGN_Keepalive | IGN ON | 0 | 1 | 1 | 0 | bool |
 
 Project UDS IDs:
 

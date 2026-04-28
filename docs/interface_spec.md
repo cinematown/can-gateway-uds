@@ -15,12 +15,12 @@
 │  common/can_bsp.*  │ ← ① 성재/민진 구현, 나머지 전원 사용
 └─────────┬──────────┘
           │
-  ┌───────┼──────────┬──────────┬──────────┐
-  │       │          │          │          │
-┌─▼──┐ ┌──▼──┐  ┌────▼────┐ ┌───▼──┐  ┌────▼────┐
-│eng │ │ gw  │  │ cluster │ │ uds  │  │  main   │
-│ ②  │ │ ③  │  │   ⑤    │ │  ④  │  │   ⑥    │
-└────┘ └─────┘  └─────────┘ └──────┘  └─────────┘
+  ┌───────┼──────────┬──────────┬──────────┬──────────┐
+  │       │          │          │          │          │
+┌─▼──┐ ┌──▼──┐  ┌────▼────┐ ┌───▼──┐  ┌────▼────┐ ┌──▼───┐
+│eng │ │ gw  │  │ cluster │ │ uds  │  │  body   │ │ main │
+│ ②  │ │ ③  │  │   ⑥    │ │  ④  │  │   ⑤     │ │  ⑦  │
+└────┘ └─────┘  └─────────┘ └──────┘  └─────────┘ └──────┘
 ```
 
 ## 모듈별 공개 API 요약
@@ -67,7 +67,20 @@ void UDS_Execute_Diagnostic(uint16_t did, const char *label);
 - **책임**: UART CLI `read vin|rpm|speed|temp` → UDS SID 0x22 요청.
 - **책임**: `0x714` 요청 송신, `0x77E` 응답 수신.
 
-### ⑤ `cluster_can` (추가 예정)
+### ⑤ `board_d_body/bcm`
+
+```c
+void BCM_Body_Init(void);
+void BCM_Body_Task(void *argument);
+uint8_t BCM_Body_IsIgnOn(void);
+uint8_t BCM_Body_GetLampStatus(void);
+uint8_t BCM_Body_GetDoorStatus(void);
+```
+- **책임**: GPIO 입력을 읽어 `0x470` Body Status 송신.
+- **책임**: `0x300` IGN/Keepalive 수신 시 byte[0] bit0로 IGN 상태 갱신.
+- **보장**: `0x470` bitfield는 `protocol_ids.h`의 `VW470_SET_*` 매크로만 사용.
+
+### ⑥ `cluster_can` (추가 예정)
 
 ```c
 void Cluster_Init(void);
@@ -81,10 +94,10 @@ void Cluster_Task(void *argument);
 - **책임**: VW Passat B6 포맷 메시지 CAN2 송신 (keep-alive 포함).
 - **참고**: Gateway가 대부분의 메시지를 이미 CAN2에 흘리므로, Cluster는 **Warning/Airbag-off/초기화** 같은 고유 메시지만 담당.
 
-### ⑥ `main.c` (한결)
+### ⑦ `main.c` (한결)
 
 각 보드 `main.c`는 CubeMX 초기화와 FreeRTOS 시작만 담당합니다.
-실제 앱 진입점은 각 보드 `src/*_main.c`의 `StartDefaultTask()` 오버라이드입니다.
+실제 앱 진입점은 각 보드 `src/*_main.c` 또는 `src/bcm_main.c`의 Task 오버라이드입니다.
 
 ## 공유 자원 (Queue/Mutex)
 
