@@ -1,0 +1,19 @@
+# Signal DB Summary
+
+Source DBC: `docs/VW_Passat_B6.dbc`
+Code mirror: `common/signal_db.h`
+
+| CAN ID | Message | Signal | Start | Len | Scale | Offset | Unit |
+|---:|---|---|---:|---:|---:|---:|---|
+| 0x280 | Motor_1 | Motordrehzahl | 16 | 16 | 0.25 | 0 | U/min |
+| 0x1A0 | Bremse_1 | BR1_Rad_kmh | 17 | 15 | 0.01 | 0 | km/h |
+| 0x288 | Motor_2 | MO2_Kuehlm_T | 8 | 8 | 0.75 | -48 | degC |
+| 0x320 | Kombi_1 | Geschwindigkeit__Kombi_1_ | 25 | 15 | 0.01 | 0 | km/h |
+| 0x420 | Kombi_2 | Kuehlmitteltemp__4_1__Kombi_2_ | 32 | 8 | 0.75 | -48 | degC |
+
+Project UDS IDs:
+
+| CAN ID | Meaning |
+|---:|---|
+| 0x714 | UDS request from Board C |
+| 0x77E | UDS response to Board C |

@@ -34,7 +34,7 @@
 | 도메인 | 버스 | 메시지 |
 |---|---|---|
 | Powertrain | CAN1 | 엔진 관련 신호 (0x280 RPM, 0x1A0 Speed, 0x288 Coolant) |
-| Diagnostic/Body | CAN2 | UDS (0x7DF/0x7E8), 계기판 제어 (0x480 Warning) |
+| Diagnostic/Body | CAN2 | UDS (0x714/0x77E), 계기판 제어 (0x480 Warning) |
 
 ## FreeRTOS Task 구조
 
@@ -42,19 +42,17 @@
 | Task | Priority | Stack | 주기 |
 |---|---|---|---|
 | EngSimTask | Normal | 512 | 10ms tick |
+| DefaultTask | Normal | 1024 | UART CLI loop |
 
 ### 보드B (Gateway)
 | Task | Priority | Stack | 주기 |
 |---|---|---|---|
-| GatewayTask | AboveNormal | 512 | Queue pending |
-| ClusterTask | Normal | 512 | 10ms tick |
-| LoggerTask | BelowNormal | 512 | 1000ms |
+| DefaultTask | Normal | 1024 | CAN queue pending |
 
 ### 보드C (UDS)
 | Task | Priority | Stack | 주기 |
 |---|---|---|---|
-| UdsTask | AboveNormal | 512 | Queue pending |
-| UdsCliTask | Normal | 512 | UART line pending |
+| DefaultTask | Normal | 1024 | UART CLI + UDS response polling |
 
 ## 데이터 흐름 예시 — "페달 밟기 → 계기판 반응"
 
@@ -64,8 +62,8 @@
 4. `GatewayTask`가 Queue pop → 라우팅 테이블 조회
 5. 이상 감지: RPM > 5500 → `s_warning_active = 1`, CAN2 `0x480` 송신
 6. CAN2로 `0x280` 포워딩 → 계기판이 수신하여 바늘 움직임
-7. 보드C가 CAN2 `0x280`을 수신하면 내부 캐시(`s_cache_rpm`) 갱신
-8. PC CLI에서 `read_did F40C` → UDS 요청 → 현재 RPM 응답
+7. PC CLI에서 `read rpm` 입력
+8. 보드C가 `0x714` 요청 → `0x77E` 응답 확인
 
 ## 확장 로드맵
 

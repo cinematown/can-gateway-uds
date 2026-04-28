@@ -5,8 +5,9 @@ labels: interface
 ---
 
 ## 변경 대상 파일
-- [ ] `common/can_db/can_db.h`
-- [ ] `common/can_bsp/can_bsp.h`
+- [ ] `common/signal_db.h`
+- [ ] `common/protocol_ids.h`
+- [ ] `common/can_bsp.h`
 - [ ] 기타: 
 
 ## 변경 내용

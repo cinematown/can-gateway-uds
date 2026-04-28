@@ -8,7 +8,7 @@
 
 ```
 ┌───────────────────┐
-│  common/can_db.h  │ ← 모두가 include (단순 매크로/구조체, 코드 없음)
+│ common/signal_db.h│ ← DBC 기반 신호 매크로/인코더
 └─────────┬─────────┘
           │
 ┌─────────▼──────────┐
@@ -25,60 +25,49 @@
 
 ## 모듈별 공개 API 요약
 
-### ① `common/can_bsp` (성재/민진)
+### ① `common/can_bsp`
 
 ```c
-int  CAN_BSP_Init(CAN_HandleTypeDef *hcan);
-void CAN_BSP_SetRxQueue(CAN_HandleTypeDef *hcan, QueueHandle_t queue);
-int  CAN_BSP_AddFilter(CAN_HandleTypeDef *hcan, uint32_t std_id);
-int  CAN_BSP_AddFilterAcceptAll(CAN_HandleTypeDef *hcan);
-int  CAN_BSP_Send(CAN_HandleTypeDef *hcan, const CAN_Msg_t *msg);
-void CAN_BSP_GetStats(CAN_HandleTypeDef *hcan, CAN_Stats_t *out_stats);
+HAL_StatusTypeDef CAN_BSP_Init(void);
+HAL_StatusTypeDef CAN_BSP_Send(uint32_t id, uint8_t *data, uint8_t len);
+HAL_StatusTypeDef CAN_BSP_SendTo(CAN_HandleTypeDef *hcan, uint32_t id, uint8_t *data, uint8_t len);
+bool CAN_BSP_Read(CAN_RxMessage_t *p_msg, uint32_t timeout);
+HAL_StatusTypeDef CAN_BSP_GetRxMessage(CAN_RxMessage_t *p_msg);
 ```
-- **보장**: `CAN_BSP_Send`는 non-blocking, TX 큐 full이면 -1 반환.
-- **보장**: RX는 HAL 콜백에서 `xQueueSendFromISR` 로 등록된 Queue에 push.
-- **보장**: Queue item 크기는 `sizeof(CAN_Msg_t)` (고정).
+- **보장**: 보드 A/C는 CAN1 기본 송수신, 보드 B는 `BOARD_B_GATEWAY` 정의로 CAN1/CAN2를 모두 활성화.
+- **보장**: RX는 HAL 콜백에서 `osMessageQueue`에 push, UDS 폴링 코드는 `CAN_BSP_GetRxMessage()` 사용 가능.
 
 ### ② `board_a_engine/engine_sim` (윤지)
 
 ```c
-void     EngSim_Init(void);
-void     EngSim_Task(void *argument);
-uint16_t EngSim_GetRPM(void);
-uint16_t EngSim_GetSpeed(void);
-int8_t   EngSim_GetCoolantTemp(void);
+void EngineSim_Init(void);
+void EngineSim_Task(void *argument);
+void EngineSim_SetThrottle(uint8_t throttle);
+void EngineSim_GetStatus(EngineSimStatus_t *status);
 ```
-- **책임**: `EngSim_Task` 는 `PERIOD_*_MS` 주기로 CAN1에 `CAN_ID_RPM/SPEED/COOLANT` 송신.
+- **책임**: `EngineSim_Task`는 `0x280/0x1A0/0x288`을 DBC 포맷으로 CAN1 송신.
 - **보장**: ADC 값은 내부에서 `osMutex` 없이 단일 Task 소유. 외부에서는 Get* 함수로만 읽을 것.
 
 ### ③ `board_b_gateway/gateway` (지윤)
 
 ```c
-void    Gateway_Init(void);
-int     Gateway_AddRoute(uint32_t src_id, uint32_t dst_id);
-void    Gateway_Task(void *argument);
-void    Gateway_LoggerTask(void *argument);
-uint8_t Gateway_IsWarningActive(void);
+void StartDefaultTask(void *argument);
 ```
-- **책임**: `can1_rx_queue` 에서 pop → 라우팅 → CAN2 TX.
-- **책임**: RPM > 5500 감지 시 `CAN_ID_WARNING` 송신.
-- **의존**: main.c가 `can1_rx_queue` 생성 후 `CAN_BSP_SetRxQueue(&hcan1, q)` 호출해둬야 함.
+- **책임**: CAN1의 엔진/속도/냉각수 메시지를 CAN2로 포워딩.
+- **책임**: RPM >= 5000 감지 시 `0x480` warning 송신.
+- **책임**: CAN2의 UDS request `0x714`를 CAN1로 라우팅.
 
 ### ④ `board_c_uds/uds_server` (은빈)
 
 ```c
-void UDS_Init(void);
-void UDS_Task(void *argument);
-void UDS_CliTask(void *argument);
-void UDS_UpdateCache_RPM(uint16_t rpm);
-void UDS_UpdateCache_Speed(uint16_t kmh);
-void UDS_UpdateCache_Temp(int8_t celsius);
+void UDS_Server_Init(void);
+void UDS_Server_Process(void);
+void UDS_Execute_Diagnostic(uint16_t did, const char *label);
 ```
-- **책임**: `CAN_ID_UDS_REQ (0x7DF)` 요청 → `CAN_ID_UDS_RESP (0x7E8)` 응답.
-- **책임**: CAN2 에서 RPM/Speed/Temp 메시지 자동 수신하여 내부 캐시 갱신.
-- **스코프**: SID 0x22만. Single Frame만 (DLC ≤ 7 데이터).
+- **책임**: UART CLI `read vin|rpm|speed|temp` → UDS SID 0x22 요청.
+- **책임**: `0x714` 요청 송신, `0x77E` 응답 수신.
 
-### ⑤ `board_b_gateway/cluster_can` (미정)
+### ⑤ `cluster_can` (추가 예정)
 
 ```c
 void Cluster_Init(void);
@@ -94,22 +83,16 @@ void Cluster_Task(void *argument);
 
 ### ⑥ `main.c` (한결)
 
-각 보드 `main.c` 의 책임:
-- CubeMX init 후 `CAN_BSP_Init(&hcan1)` (+ 보드B는 `&hcan2` 추가)
-- FreeRTOS Queue 생성: `can1_rx_queue`, (보드B) `can2_rx_queue`
-- `CAN_BSP_SetRxQueue()` 등록
-- `CAN_BSP_AddFilter*()` 등록 (게이트웨이는 AcceptAll, 나머지는 필요한 ID만)
-- 각 모듈 `_Init()` 호출
-- `osThreadNew()` 로 Task 생성
-- `osKernelStart()`
+각 보드 `main.c`는 CubeMX 초기화와 FreeRTOS 시작만 담당합니다.
+실제 앱 진입점은 각 보드 `src/*_main.c`의 `StartDefaultTask()` 오버라이드입니다.
 
 ## 공유 자원 (Queue/Mutex)
 
 | 자원명 | 보드 | 생성 위치 | 용도 |
 |---|---|---|---|
-| `can1_rx_queue` | A, B | main.c | CAN1 RX 메시지 버퍼 |
-| `can2_rx_queue` | B, C | main.c | CAN2 RX 메시지 버퍼 |
-| `uart_tx_mutex` | 전체 | main.c | UART 출력 동기화 (printf racing 방지) |
+| `can_rx_q` | 전체 | `common/can_bsp.c` | CAN RX 메시지 버퍼 |
+| `uart_rx_q` | 전체 | `common/uart.c` | UART RX 버퍼 |
+| `uart_tx_mutex` | 전체 | `common/uart.c` | UART 출력 동기화 |
 
 ## Task 우선순위 규칙
 

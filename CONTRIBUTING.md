@@ -1,134 +1,243 @@
 # Contributing Guide
 
-## 1. 시작하기
+이 문서는 Windows 개발 환경을 기준으로 작성합니다. 현재 펌웨어는 모든 보드가 STM32F429ZI 기준이며, 각 보드는 `firmware/board_*` 아래에서 독립적으로 CMake 빌드됩니다.
 
-### 첫 클론 후
-```bash
+## 1. 저장소 구조
+
+```text
+can-gateway-uds/
+├── common/                     # 전 보드 공통 코드
+│   ├── can_bsp.c/h
+│   ├── cli.c/h
+│   ├── protocol_ids.h
+│   ├── signal_db.h
+│   └── uart.c/h
+├── firmware/
+│   ├── board_a_engine/         # 보드 A 단위 빌드 프로젝트
+│   ├── board_b_gateway/        # 보드 B 단위 빌드 프로젝트
+│   └── board_c_uds/            # 보드 C 단위 빌드 프로젝트
+├── docs/
+├── tools/
+└── CMakeLists.txt              # 통합 빌드 관리용
+```
+
+각 보드 폴더에는 `CMakeLists.txt`, `CMakePresets.json`, `.ioc`, `Core/`, `Drivers/`, `Middlewares/`, `src/`가 있어야 합니다.
+
+## 2. Windows 로컬 빌드 준비
+
+### 필수 도구
+
+Windows PowerShell에서 아래 명령이 모두 잡혀야 합니다.
+
+```powershell
+git --version
+cmake --version
+make --version
+arm-none-eabi-gcc --version
+arm-none-eabi-g++ --version
+```
+
+권장 설치:
+
+| 도구 | 용도 |
+|---|---|
+| Git for Windows | 저장소 clone, branch 작업 |
+| CMake 3.22 이상 | 보드별/통합 빌드 |
+| STM32CubeCLT 또는 Arm GNU Toolchain | `arm-none-eabi-gcc`, `arm-none-eabi-g++`, `make` |
+| STM32CubeIDE | `.ioc` 확인, 디버깅, 플래시 |
+
+도구가 설치되어 있는데 `where arm-none-eabi-gcc`가 실패하면, GNU Arm toolchain의 `bin` 폴더와 `make`가 있는 폴더를 Windows `PATH`에 추가하세요.
+
+예시:
+
+```powershell
+$env:Path += ";C:\ST\STM32CubeCLT\GNU-tools-for-STM32\bin"
+$env:Path += ";C:\ST\STM32CubeCLT\CMake\bin"
+$env:Path += ";C:\ST\STM32CubeCLT\Ninja\bin"
+```
+
+설치 경로는 PC마다 다를 수 있으니 실제 폴더명을 확인해서 맞춰야 합니다.
+
+## 3. 첫 클론
+
+```powershell
 git clone https://github.com/<OWNER>/can-gateway-uds.git
 cd can-gateway-uds
-
-# 자기 담당 브랜치로 이동
 git checkout feature/<your-module>
-
-# STM32CubeIDE에서 자기 담당 보드 프로젝트 Import
-# File → Import → Existing Projects → board_a_engine/ (예)
 ```
 
-### `common/` 사용법
-각 보드 프로젝트에서 `common/` 폴더를 Include Path 에 추가해야 합니다.
+STM32CubeIDE에서 열 때는 루트가 아니라 담당 보드 폴더를 Import합니다.
 
-**STM32CubeIDE 설정**:
-1. 프로젝트 우클릭 → Properties
-2. C/C++ General → Paths and Symbols → Includes → GNU C
-3. Add → Workspace → `../common/can_bsp` 와 `../common/can_db` 추가
-4. C/C++ General → Paths and Symbols → Source Location
-5. Link Folder → `../common/can_bsp` 링크 (빌드 대상에 포함)
+예시:
 
-## 2. 브랜치 전략
-
-```
-main                       ← 검증된 통합 (팀장만 머지)
-├── feature/can-bsp        ← ① 성재/민진
-├── feature/engine-sim     ← ② 윤지
-├── feature/gateway        ← ③ 지윤
-├── feature/uds-server     ← ④ 은빈
-├── feature/cluster-can    ← ⑤ 미정
-└── feature/integration    ← ⑥ 한결 (통합 테스트)
+```text
+firmware/board_a_engine
+firmware/board_b_gateway
+firmware/board_c_uds
 ```
 
-### 규칙
-1. **`main` 직접 push 절대 금지** → 반드시 PR
-2. **`common/` 수정은 팀장 승인 필수** (인터페이스 변경 = 전원 영향)
-3. 자기 브랜치는 자유롭게 커밋 가능
-4. PR 올리기 전 **자기 브랜치 로컬에서 빌드 성공 확인**
-5. 1일 1회 이상 push 권장 (백업 + 진행 상황 공유)
+## 4. 보드별 단위 빌드
 
-## 3. 커밋 메시지 규칙
+단위 빌드는 담당 보드만 configure/build합니다. PR 전에 최소한 자기 담당 보드는 반드시 성공해야 합니다.
 
-```
-[모듈] 간단한 요약 (50자 이내)
+### Board A - Engine
 
-(선택) 상세 설명
-- 뭘 했는지
-- 왜 했는지
-- 주의사항
+```powershell
+cmake --preset Debug --fresh -S firmware/board_a_engine
+cmake --build firmware/board_a_engine/build/Debug --parallel
 ```
 
-### 예시
-```
-[engine-sim] ADC2 채널로 브레이크 페달 입력 추가
+### Board B - Gateway
 
-- PA1 포텐셔미터 연결
-- 브레이크 > 50% 시 속도 절반 감속
-- TODO: 감속 곡선 튜닝 필요
+```powershell
+cmake --preset Debug --fresh -S firmware/board_b_gateway
+cmake --build firmware/board_b_gateway/build/Debug --parallel
 ```
 
-### 태그 목록
-- `[can-bsp]` CAN 드라이버
-- `[engine-sim]` 엔진 시뮬레이터
-- `[gateway]` 게이트웨이
-- `[uds]` UDS 서버
-- `[cluster]` 계기판
-- `[main]` main.c / Task 구조
-- `[docs]` 문서
-- `[build]` 빌드/CubeMX 설정
-- `[fix]` 버그 수정
+### Board C - UDS
 
-## 4. Pull Request 규칙
-
-### PR 제목
-```
-[모듈] 변경사항 요약
+```powershell
+cmake --preset Debug --fresh -S firmware/board_c_uds
+cmake --build firmware/board_c_uds/build/Debug --parallel
 ```
 
-### PR 본문
-`.github/PULL_REQUEST_TEMPLATE.md` 자동 로딩됨. 체크리스트 모두 채울 것.
+생성물은 각 보드의 `build/Debug` 아래에 생깁니다.
 
-### 리뷰어
-- 일반 PR: 팀장(⑥) 1명
-- `common/` 수정 PR: 팀장(⑥) + 영향받는 모듈 담당자
-- 통합 PR: 전원
+예시:
 
-### 머지 방식
-- **Squash and merge** 기본 (히스토리 깔끔)
-- 대규모 feature는 **Rebase and merge** (커밋 보존)
-
-## 5. 일정 체크포인트
-
-### 1주차
-- **Day 2**: 팀장 헤더 파일 배포 완료
-- **Day 4**: ① CAN 드라이버 실 CAN 양방향 통신 성공 (**크리티컬 패스**)
-- **Day 7**: 각 모듈 단위 테스트 완료 (loopback/stub 기반)
-
-### 2주차
-- **Day 8~11**: 쌍별 통합 (①+②, ①+③, ③+⑤, ①+④)
-- **Day 12**: 엔드투엔드 통합 테스트
-- **Day 13~14**: 버그 수정, 문서, 영상
-
-## 6. 충돌 대응
-
-### "내 브랜치에서 빌드 안 돼요"
-1. `git status` 확인 → CubeMX 재생성 흔적 있는지 (`Drivers/`, `Core/` 변경)
-2. 최신 `main` pull 후 rebase
-3. 해결 안 되면 팀장 호출 (`.ioc` 수정은 팀장만)
-
-### "머지 충돌 났어요"
-1. **절대 함부로 resolve 하지 말 것**
-2. 팀장에게 DM → 원인 파악 후 같이 해결
-3. `common/` 충돌은 특히 주의
-
-### "다른 사람 코드 필요해요"
-```bash
-git fetch origin
-git merge origin/main       # 또는 rebase
+```text
+firmware/board_a_engine/build/Debug/board_a_engine.elf
+firmware/board_b_gateway/build/Debug/board_b_gateway.elf
+firmware/board_c_uds/build/Debug/board_c_uds.elf
 ```
-아직 머지 안 된 다른 feature 브랜치 기능이 필요하면 팀장에게 조기 통합 요청.
 
-## 7. 일일 스탠드업 (매일 10분)
+## 5. 통합 빌드
 
-각자 답할 것:
-1. 어제 뭐 했나?
-2. 오늘 뭐 할 건가?
-3. 막힌 것 / 남에게 의존하는 것?
+통합 빌드는 루트 `CMakeLists.txt`에서 세 보드를 모두 configure/build합니다. `common/`을 수정했거나 여러 보드 간 인터페이스를 건드렸다면 반드시 통합 빌드를 돌립니다.
 
-카톡/Slack 비동기로 아침에 공유 권장.
+```powershell
+cmake --preset Debug --fresh
+cmake --build --preset Debug --parallel
+```
+
+특정 타깃만 직접 호출할 수도 있습니다.
+
+```powershell
+cmake --build build/Debug --target build_board_a_engine --parallel
+cmake --build build/Debug --target build_board_b_gateway --parallel
+cmake --build build/Debug --target build_board_c_uds --parallel
+cmake --build build/Debug --target build_firmware --parallel
+```
+
+## 6. 클린 빌드
+
+CMake 캐시가 꼬였거나 `.ioc`/toolchain 경로를 바꾼 뒤에는 빌드 폴더를 지우고 다시 configure합니다.
+
+```powershell
+Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force firmware/board_a_engine/build -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force firmware/board_b_gateway/build -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force firmware/board_c_uds/build -ErrorAction SilentlyContinue
+
+cmake --preset Debug --fresh
+cmake --build --preset Debug --parallel
+```
+
+## 7. GitHub Actions 구성
+
+GitHub에 올리면 `.github/workflows/firmware-ci.yml`이 PR과 `main` push에서 자동 실행됩니다.
+
+구성 의도:
+
+| Job | 목적 |
+|---|---|
+| `layout` | `common/`, `docs/`, `firmware/board_*` 구조가 맞는지 빠르게 확인 |
+| `unit-build` | 보드 A/B/C를 matrix로 각각 단위 빌드 |
+| `integration-build` | 루트 `build_firmware`로 전체 통합 빌드 |
+
+CI는 Ubuntu runner에서 `gcc-arm-none-eabi`, `binutils-arm-none-eabi`, `libnewlib-arm-none-eabi`, `make`를 설치해 빌드합니다. Windows 로컬 빌드와 명령은 같지만, CI는 설치를 자동으로 처리합니다.
+
+PR에서 봐야 할 기준:
+
+| 상황 | 통과해야 하는 항목 |
+|---|---|
+| 보드 A/B/C 중 하나만 수정 | 해당 보드 단위 빌드 + 통합 빌드 |
+| `common/` 수정 | 세 보드 단위 빌드 + 통합 빌드 |
+| 문서만 수정 | `layout` 통과 |
+
+## 8. 브랜치 전략
+
+```text
+main                       검증된 통합
+├── feature/can-bsp        공통 CAN BSP
+├── feature/engine-sim     보드 A
+├── feature/gateway        보드 B
+├── feature/uds-server     보드 C
+├── feature/cluster-can    계기판
+└── feature/integration    통합 테스트
+```
+
+규칙:
+
+1. `main` 직접 push 금지, 반드시 PR 사용.
+2. `common/` 수정은 팀장 승인 필수.
+3. PR 전 담당 보드 단위 빌드와 루트 통합 빌드 확인.
+4. `.ioc`, `Core/`, `Drivers/`, `Middlewares/`를 CubeMX로 재생성했다면 PR 본문에 명시.
+5. 자동 생성 파일을 대량 변경했을 때는 어떤 보드에서 재생성했는지 적기.
+
+## 9. 커밋 메시지
+
+```text
+[모듈] 간단한 요약
+```
+
+예시:
+
+```text
+[engine-sim] DBC 기반 RPM 프레임 인코딩 적용
+[gateway] UDS 요청 라우팅 ID 변경
+[build] 보드별 CMake 독립 빌드 추가
+```
+
+태그:
+
+| 태그 | 범위 |
+|---|---|
+| `[can-bsp]` | `common/can_bsp.*` |
+| `[engine-sim]` | `firmware/board_a_engine/src` |
+| `[gateway]` | `firmware/board_b_gateway/src` |
+| `[uds]` | `firmware/board_c_uds/src` |
+| `[cluster]` | 계기판 관련 코드 |
+| `[docs]` | 문서 |
+| `[build]` | CMake, workflow, CubeMX 설정 |
+| `[fix]` | 버그 수정 |
+
+## 10. 자주 나는 문제
+
+### `arm-none-eabi-gcc is not a full path and was not found`
+
+툴체인이 PATH에 없습니다.
+
+```powershell
+where arm-none-eabi-gcc
+where arm-none-eabi-g++
+```
+
+실패하면 STM32CubeCLT 또는 Arm GNU Toolchain의 `bin` 폴더를 PATH에 추가하세요.
+
+### `make is not recognized`
+
+현재 preset은 `Unix Makefiles` generator를 사용합니다. STM32CubeCLT의 `make` 또는 MSYS2/MinGW의 `make`가 PATH에 있어야 합니다.
+
+### CMake 캐시가 이전 경로를 잡고 있음
+
+빌드 폴더를 삭제하고 다시 configure합니다.
+
+```powershell
+Remove-Item -Recurse -Force firmware/board_c_uds/build
+cmake --preset Debug --fresh -S firmware/board_c_uds
+```
+
+### `common/` 헤더를 못 찾음
+
+보드별 `CMakeLists.txt`에 이미 `../../common` include가 들어가 있습니다. STM32CubeIDE에서만 안 보이면 해당 보드 프로젝트의 include path에 루트 `common` 폴더를 추가하세요.

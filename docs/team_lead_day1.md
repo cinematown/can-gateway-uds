@@ -16,7 +16,7 @@ git init
 git add .
 git commit -m "[init] Initial project scaffold
 
-- common/can_db.h: CAN ID/UDS DID/임계값 공유 정의
+- common/signal_db.h: DBC 기반 CAN ID/신호 정의
 - common/can_bsp: CAN 드라이버 인터페이스 + stub 구현
 - board_a/b/c: 보드별 프로젝트 골격 + 모듈 header/stub
 - docs: architecture, CAN DB, UDS DID map, interface spec
@@ -78,7 +78,7 @@ Day 2 아침: 인터페이스 헤더 최종 확정본 공유합니다.
 
 **보드B 추가**:
 - CAN1 활성화 (Powertrain)
-- CAN2 활성화 (Diagnostic) — F446RE 필수
+- CAN2 활성화 (Diagnostic) — STM32F429ZI 기준
 - 둘 다 500kbps
 
 **보드C 추가**:
@@ -93,7 +93,7 @@ Day 2 아침: 인터페이스 헤더 최종 확정본 공유합니다.
 각 보드 프로젝트에서:
 - 프로젝트 우클릭 → Properties → C/C++ Build → Settings
 - Tool Settings → MCU GCC Compiler → Include paths
-- 추가: `"../../common/can_db"`, `"../../common/can_bsp"`
+- 추가: `"../../common"`
 
 ### 7. 소스 링크 추가
 각 보드 프로젝트에서:
@@ -121,7 +121,7 @@ git push origin main  # 팀장만 가능
 
 ### 10. 헤더 파일 최종 점검
 팀원들 피드백 받고 필요 시 수정:
-- `common/can_db/can_db.h` — CAN ID, DID, 임계값
+- `common/signal_db.h`, `common/protocol_ids.h` — CAN ID, DID, 신호 매크로
 - `common/can_bsp/can_bsp.h` — API 시그니처
 - 각 모듈 `*.h` — 외부 공개 API
 
@@ -130,7 +130,7 @@ git push origin main  # 팀장만 가능
 @팀원들 인터페이스 확정됐습니다.
 
 ✅ 확정된 파일 (수정 시 팀장 승인 필수):
-  - common/can_db/can_db.h
+  - common/signal_db.h
   - common/can_bsp/can_bsp.h
   - 각 모듈 header (Inc/*.h)
 

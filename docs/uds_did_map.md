@@ -19,13 +19,13 @@ SID 0x22 (ReadDataByIdentifier) 지원 DID 목록.
 
 ### Positive Response (RPM = 3500)
 ```
-Request:  7DF  03 22 F4 0C 00 00 00 00
+Request:  714  03 22 F4 0C 00 00 00 00
                 │  │  └──┬──┘
                 │  │     DID (0xF40C)
                 │  └─ SID (0x22)
                 └──── PCI length (3)
 
-Response: 7E8  05 62 F4 0C 0D AC 00 00
+Response: 77E  05 62 F4 0C 0D AC 00 00
                 │  │  └──┬──┘  └──┬──┘
                 │  │     DID      Value (0x0DAC = 3500 rpm)
                 │  └─ SID + 0x40 (0x62)
@@ -34,9 +34,9 @@ Response: 7E8  05 62 F4 0C 0D AC 00 00
 
 ### Negative Response (존재하지 않는 DID)
 ```
-Request:  7DF  03 22 99 99 00 00 00 00
+Request:  714  03 22 99 99 00 00 00 00
 
-Response: 7E8  03 7F 22 31 00 00 00 00
+Response: 77E  03 7F 22 31 00 00 00 00
                 │  │  │  └─ NRC 0x31 (Request Out of Range)
                 │  │  └──── Original SID
                 │  └─────── Negative Response SID (0x7F)

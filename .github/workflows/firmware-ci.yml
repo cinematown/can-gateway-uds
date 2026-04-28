@@ -1,0 +1,146 @@
+name: Firmware CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CMAKE_BUILD_TYPE: Debug
+
+jobs:
+  layout:
+    name: Layout check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify required project layout
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f common/can_bsp.c
+          test -f common/signal_db.h
+          test -f common/protocol_ids.h
+          test -f docs/VW_Passat_B6.dbc
+
+          for board in board_a_engine board_b_gateway board_c_uds; do
+            test -f "firmware/${board}/CMakeLists.txt"
+            test -f "firmware/${board}/CMakePresets.json"
+            test -f "firmware/${board}/${board}.ioc"
+            test -d "firmware/${board}/Core"
+            test -d "firmware/${board}/Drivers"
+            test -d "firmware/${board}/Middlewares"
+            test -d "firmware/${board}/src"
+          done
+
+          test ! -d Core
+          test ! -d Drivers
+          test ! -d Middlewares
+          test ! -d board_a_engine
+          test ! -d board_b_gateway
+          test ! -d board_c_uds
+
+  unit-build:
+    name: Unit build (${{ matrix.board }})
+    runs-on: ubuntu-latest
+    needs: layout
+
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - board_a_engine
+          - board_b_gateway
+          - board_c_uds
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install ARM embedded toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binutils-arm-none-eabi \
+            gcc-arm-none-eabi \
+            libnewlib-arm-none-eabi \
+            make
+
+      - name: Show tool versions
+        shell: bash
+        run: |
+          cmake --version
+          make --version
+          arm-none-eabi-gcc --version
+          arm-none-eabi-g++ --version
+
+      - name: Configure ${{ matrix.board }}
+        shell: bash
+        run: cmake --preset Debug --fresh -S "firmware/${{ matrix.board }}"
+
+      - name: Build ${{ matrix.board }}
+        shell: bash
+        run: cmake --build "firmware/${{ matrix.board }}/build/Debug" --parallel
+
+      - name: Upload build outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.board }}-debug
+          path: |
+            firmware/${{ matrix.board }}/build/Debug/*.elf
+            firmware/${{ matrix.board }}/build/Debug/*.map
+            firmware/${{ matrix.board }}/build/Debug/compile_commands.json
+          if-no-files-found: ignore
+
+  integration-build:
+    name: Integration build
+    runs-on: ubuntu-latest
+    needs: unit-build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install ARM embedded toolchain
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            binutils-arm-none-eabi \
+            gcc-arm-none-eabi \
+            libnewlib-arm-none-eabi \
+            make
+
+      - name: Configure workspace
+        shell: bash
+        run: cmake --preset Debug --fresh
+
+      - name: Build all firmware targets
+        shell: bash
+        run: cmake --build --preset Debug --parallel
+
+      - name: Upload integrated build outputs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware-integration-debug
+          path: |
+            build/Debug/**/*.elf
+            build/Debug/**/*.map
+            build/Debug/**/compile_commands.json
+          if-no-files-found: ignore

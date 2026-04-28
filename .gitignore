@@ -1,3 +1,43 @@
-build
-mx.scratch
-!.settings
+# Build outputs
+build/
+**/build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+*.lst
+*.o
+*.obj
+*.a
+*.d
+*.su
+
+# STM32CubeMX / IDE generated temp
+mx.scratch/
+.mxproject
+.settings/
+.metadata/
+
+# VS Code / editor local state
+.vscode/*
+!.vscode/settings.json
+!.vscode/c_cpp_properties.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
