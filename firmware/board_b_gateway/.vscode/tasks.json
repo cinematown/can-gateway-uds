@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "configure: Debug",
+            "type": "shell",
+            "command": "${config:cmake.cmakePath}",
+            "args": [
+                "--preset",
+                "Debug",
+                "--fresh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "build: Debug",
+            "type": "shell",
+            "command": "${config:cmake.cmakePath}",
+            "args": [
+                "--build",
+                "${workspaceFolder}/build/Debug",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "configure: Debug"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}
