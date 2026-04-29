@@ -50,9 +50,9 @@ GatewayTask_Handle = osThreadNew(GatewayTask, NULL, &GatewayTask__attributes);
 | 위치 | 호출 함수 | 의미 |
 |---|---|---|
 | `GatewayTask()` | `GatewayEngineBridge_OnRx(&rxMsg)` | Engine Board `0x100` 수신값을 계기판용 최신 상태로 저장 |
-| `GatewayTask()` | `GatewayBodyBridge_OnRx(&rxMsg)` | Body Board 메시지 수신값을 처리할 예정 |
+| `GatewayTask()` | `GatewayBodyBridge_OnRx(&rxMsg)` | Body Board `0x390` 수신값을 저장하고 CAN2로 즉시 포워딩 |
 | `ClusterTask()` | `GatewayEngineBridge_Task10ms()` | 저장된 engine 상태를 CAN2 `0x280/0x1A0`로 주기 송신 |
-| `ClusterTask()` | `GatewayBodyBridge_Task10ms()` | Body 상태/keep-alive CAN2 주기 송신 예정 |
+| `ClusterTask()` | `GatewayBodyBridge_Task10ms()` | 최근 Body 상태를 CAN2 `0x390`으로 100ms 주기 재송신 |
 
 이 구조 덕분에 CAN 초기화, queue 처리, logger 등 기존 gateway 동작은 그대로 유지됩니다.
 
@@ -84,15 +84,17 @@ Engine Board 프로토콜을 VW 계기판용 CAN2 메시지로 변환합니다.
 
 Body Board 프로토콜을 처리하기 위한 분리 파일입니다.
 
-현재는 Body Board의 CAN ID와 payload layout이 확정되지 않았기 때문에 placeholder만 있습니다.
+현재 Board D는 Golf6 DBC 기반 `mGate_Komf_1` 프레임을 CAN1 `0x390`으로 송신합니다.
+Gateway Body bridge는 이 프레임을 받아 payload를 저장하고 CAN2로 포워딩합니다.
 
-추후 이 파일에 들어갈 가능성이 높은 항목:
+현재 처리 대상:
 
-- turn signal
-- door open/close
-- lamp/high beam/fog
-- warning lamp
-- VW body status frame, 예: `0x470`
+| 입력 | 출력 |
+|---|---|
+| CAN1 `0x390` Golf6 `mGate_Komf_1` | CAN2 `0x390` 즉시 포워딩 |
+| 최근 CAN1 `0x390` 상태 | CAN2 `0x390` 100ms 주기 재송신 |
+
+Timeout 기준은 500ms입니다. 마지막 `0x390` 수신 후 500ms가 지나면 주기 재송신을 멈춥니다.
 
 ## Board A 입력 메시지
 
@@ -343,7 +345,7 @@ CLI >
 | `canlog id 100` | `0x100` ID만 출력 |
 | `canlog id 280` | `0x280` ID만 출력 |
 | `canlog id 1A0` | `0x1A0` ID만 출력 |
-| `canlog id 390` | `0x390` ID만 출력 |
+| `canlog id 390` | Board D Body `0x390` ID만 출력 |
 | `canlog all` | ID 필터 해제 |
 | `canlog clear` | CAN 로그 카운터 초기화 |
 | `log off` | 1초마다 나오는 `[GW] RX1=...` 상태 로그 중지 |
@@ -356,6 +358,8 @@ CLI >
 [RX1] id=0x100 dlc=8 data=DC 05 64 00 5A 03 00 00
 [TX2] id=0x280 dlc=8 data=00 00 70 17 00 00 00 00 st=0
 [TX2] id=0x1A0 dlc=8 data=08 00 20 4E 00 00 00 03 st=0
+[RX1] id=0x390 dlc=8 data=10 00 01 00 00 22 00 04
+[TX2] id=0x390 dlc=8 data=10 00 01 00 00 22 00 04 st=0
 ```
 
 주의:
