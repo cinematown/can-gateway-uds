@@ -1,5 +1,6 @@
 #include "cmsis_os.h"
 #include "can_bsp.h"
+#include "gateway_cluster_bridge.h"
 #include "usart.h"
 
 #include <stdarg.h>
@@ -66,6 +67,7 @@ void GatewayTask(void *argument)
 
         if (rxMsg.bus == 1U && rxMsg.id == CAN_ID_ENGINE_DATA) {
             uint16_t rpm = CAN_GetU16LE(rxMsg.data, CAN_ENGINE_DATA_RPM_IDX);
+            GatewayClusterBridge_OnRx(&rxMsg);
             HAL_StatusTypeDef tx_status =
                 CAN_BSP_SendTo(&hcan2, rxMsg.id, rxMsg.data, rxMsg.dlc);
 
@@ -89,6 +91,7 @@ void ClusterTask(void *argument)
     (void)argument;
 
     for (;;) {
+        GatewayClusterBridge_Task10ms();
         osDelay(10U);
     }
 }
