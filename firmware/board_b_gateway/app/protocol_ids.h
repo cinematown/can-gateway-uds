@@ -3,7 +3,7 @@
 
 #define CAN_ID_ENGINE_DATA           0x100U
 #define CAN_ID_DASHBOARD_CTRL        0x200U
-#define CAN_ID_BODY_STATUS           0x470U
+#define CAN_ID_BODY_STATUS           0x390U
 #define CAN_ID_UDS_REQ_BOARD_B       0x7E0U
 #define CAN_ID_UDS_RESP_BOARD_B      0x7E8U
 
