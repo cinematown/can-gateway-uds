@@ -54,6 +54,27 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for GatewayTask_ */
+osThreadId_t GatewayTask_Handle;
+const osThreadAttr_t GatewayTask__attributes = {
+  .name = "GatewayTask_",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+/* Definitions for ClusterTask_ */
+osThreadId_t ClusterTask_Handle;
+const osThreadAttr_t ClusterTask__attributes = {
+  .name = "ClusterTask_",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for LoggerTask_ */
+osThreadId_t LoggerTask_Handle;
+const osThreadAttr_t LoggerTask__attributes = {
+  .name = "LoggerTask_",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -61,6 +82,9 @@ const osThreadAttr_t defaultTask_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
+void StartTask02(void *argument);
+void ClusterTask(void *argument);
+void LoggerTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -94,6 +118,15 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
+  /* creation of GatewayTask_ */
+  GatewayTask_Handle = osThreadNew(StartTask02, NULL, &GatewayTask__attributes);
+
+  /* creation of ClusterTask_ */
+  ClusterTask_Handle = osThreadNew(ClusterTask, NULL, &ClusterTask__attributes);
+
+  /* creation of LoggerTask_ */
+  LoggerTask_Handle = osThreadNew(LoggerTask, NULL, &LoggerTask__attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -120,6 +153,60 @@ __weak void StartDefaultTask(void *argument)
     osDelay(1);
   }
   /* USER CODE END StartDefaultTask */
+}
+
+/* USER CODE BEGIN Header_StartTask02 */
+/**
+* @brief Function implementing the GatewayTask_ thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartTask02 */
+__weak void StartTask02(void *argument)
+{
+  /* USER CODE BEGIN StartTask02 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END StartTask02 */
+}
+
+/* USER CODE BEGIN Header_ClusterTask */
+/**
+* @brief Function implementing the ClusterTask_ thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ClusterTask */
+__weak void ClusterTask(void *argument)
+{
+  /* USER CODE BEGIN ClusterTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END ClusterTask */
+}
+
+/* USER CODE BEGIN Header_LoggerTask */
+/**
+* @brief Function implementing the LoggerTask_ thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_LoggerTask */
+__weak void LoggerTask(void *argument)
+{
+  /* USER CODE BEGIN LoggerTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END LoggerTask */
 }
 
 /* Private application code --------------------------------------------------*/
