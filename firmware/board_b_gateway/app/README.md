@@ -343,6 +343,7 @@ CLI >
 | `canlog id 100` | `0x100` ID만 출력 |
 | `canlog id 280` | `0x280` ID만 출력 |
 | `canlog id 1A0` | `0x1A0` ID만 출력 |
+| `canlog id 390` | `0x390` ID만 출력 |
 | `canlog all` | ID 필터 해제 |
 | `canlog clear` | CAN 로그 카운터 초기화 |
 | `log off` | 1초마다 나오는 `[GW] RX1=...` 상태 로그 중지 |
