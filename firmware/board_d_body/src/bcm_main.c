@@ -12,8 +12,8 @@
 
 /*
  * Stage switch:
- *   0 = standalone bench mode, send 0x470 every 100 ms immediately.
- *   1 = integration mode, send 0x470 only after an IGN-on CAN frame is received.
+ *   0 = standalone bench mode, send Golf6 0x390 every 100 ms immediately.
+ *   1 = integration mode, send Golf6 0x390 only after an IGN-on CAN frame is received.
  */
 #ifndef BCM_BODY_WAIT_FOR_IGN
 #define BCM_BODY_WAIT_FOR_IGN 1
