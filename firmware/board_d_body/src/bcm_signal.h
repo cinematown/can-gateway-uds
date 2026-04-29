@@ -14,6 +14,9 @@
 extern "C" {
 #endif
 
+#define BCM_GOLF6_CAN_ID_MGATE_KOMF_1 0x390U
+#define BCM_GOLF6_MGATE_KOMF_1_DLC    8U
+
 typedef struct {
     BcmInput_State_t input;
     uint8_t left_blink_on;
