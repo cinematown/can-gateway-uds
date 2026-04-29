@@ -24,9 +24,15 @@ bool uartInit(void) {
     bool ret = uartOpen(0, 115200);
 
     if (ret) {
+        HAL_NVIC_SetPriority(USART3_IRQn, 5, 0);
+        HAL_NVIC_EnableIRQ(USART3_IRQn);
         HAL_UART_Receive_IT(&huart3, &rx_data, 1);
     }
     return ret;
+}
+
+void USART3_IRQHandler(void) {
+    HAL_UART_IRQHandler(&huart3);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
@@ -66,12 +72,7 @@ bool uartOpen(uint8_t ch, uint32_t baudrate)
     if (ch != 0)
         return false;
 
-    huart3.Init.BaudRate = baudrate;
-
-    if (HAL_UART_DeInit(&huart3) != HAL_OK)
-        return false;
-
-    if (HAL_UART_Init(&huart3) != HAL_OK)
+    if (baudrate != huart3.Init.BaudRate)
         return false;
 
     return true;

@@ -24,6 +24,8 @@ extern volatile uint32_t can2RxCount;
 extern volatile uint32_t canSendEnterCount;
 extern volatile uint32_t canTxBusyCount;
 extern volatile uint32_t canTxErrorCount;
+extern volatile uint32_t canInitStep;
+extern volatile uint32_t canInitErrorStep;
 
 HAL_StatusTypeDef CAN_BSP_Init(void);
 HAL_StatusTypeDef CAN_BSP_Send(uint32_t id, uint8_t *data, uint8_t len);

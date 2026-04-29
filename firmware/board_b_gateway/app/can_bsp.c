@@ -14,17 +14,25 @@ volatile uint32_t can2RxCount = 0;
 volatile uint32_t canSendEnterCount = 0;
 volatile uint32_t canTxBusyCount = 0;
 volatile uint32_t canTxErrorCount = 0;
+volatile uint32_t canInitStep = 0;
+volatile uint32_t canInitErrorStep = 0;
 
 #define CAN_RX_Q_SIZE 64U
 
 HAL_StatusTypeDef CAN_BSP_Init(void)
 {
+    canInitStep = 1U;
+    canInitErrorStep = 0U;
+
     if (can_rx_q == NULL) {
         can_rx_q = osMessageQueueNew(CAN_RX_Q_SIZE, sizeof(CAN_RxMessage_t), NULL);
         if (can_rx_q == NULL) {
+            canInitErrorStep = 1U;
             return HAL_ERROR;
         }
     }
+
+    canInitStep = 2U;
 
     CAN_FilterTypeDef filter1 = {0};
     filter1.FilterActivation = ENABLE;
@@ -38,11 +46,28 @@ HAL_StatusTypeDef CAN_BSP_Init(void)
     filter1.FilterScale = CAN_FILTERSCALE_32BIT;
     filter1.SlaveStartFilterBank = 14;
 
-    if (HAL_CAN_ConfigFilter(&hcan1, &filter1) != HAL_OK) return HAL_ERROR;
-    if (HAL_CAN_Start(&hcan1) != HAL_OK) return HAL_ERROR;
-    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) return HAL_ERROR;
+    if (HAL_CAN_ConfigFilter(&hcan1, &filter1) != HAL_OK) {
+        canInitErrorStep = 2U;
+        return HAL_ERROR;
+    }
+
+    canInitStep = 3U;
+
+    if (HAL_CAN_Start(&hcan1) != HAL_OK) {
+        canInitErrorStep = 3U;
+        return HAL_ERROR;
+    }
+
+    canInitStep = 4U;
+
+    if (HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+        canInitErrorStep = 4U;
+        return HAL_ERROR;
+    }
 
 #ifdef BOARD_B_GATEWAY
+    canInitStep = 5U;
+
     CAN_FilterTypeDef filter2 = {0};
     filter2.FilterActivation = ENABLE;
     filter2.FilterBank = 14;
@@ -55,11 +80,27 @@ HAL_StatusTypeDef CAN_BSP_Init(void)
     filter2.FilterScale = CAN_FILTERSCALE_32BIT;
     filter2.SlaveStartFilterBank = 14;
 
-    if (HAL_CAN_ConfigFilter(&hcan2, &filter2) != HAL_OK) return HAL_ERROR;
-    if (HAL_CAN_Start(&hcan2) != HAL_OK) return HAL_ERROR;
-    if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) return HAL_ERROR;
+    if (HAL_CAN_ConfigFilter(&hcan2, &filter2) != HAL_OK) {
+        canInitErrorStep = 5U;
+        return HAL_ERROR;
+    }
+
+    canInitStep = 6U;
+
+    if (HAL_CAN_Start(&hcan2) != HAL_OK) {
+        canInitErrorStep = 6U;
+        return HAL_ERROR;
+    }
+
+    canInitStep = 7U;
+
+    if (HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+        canInitErrorStep = 7U;
+        return HAL_ERROR;
+    }
 #endif
 
+    canInitStep = 8U;
     return HAL_OK;
 }
 

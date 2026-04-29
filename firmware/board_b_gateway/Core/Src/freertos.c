@@ -82,7 +82,7 @@ const osThreadAttr_t LoggerTask__attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void StartTask02(void *argument);
+void GatewayTask(void *argument);
 void ClusterTask(void *argument);
 void LoggerTask(void *argument);
 
@@ -119,7 +119,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of GatewayTask_ */
-  GatewayTask_Handle = osThreadNew(StartTask02, NULL, &GatewayTask__attributes);
+  GatewayTask_Handle = osThreadNew(GatewayTask, NULL, &GatewayTask__attributes);
 
   /* creation of ClusterTask_ */
   ClusterTask_Handle = osThreadNew(ClusterTask, NULL, &ClusterTask__attributes);
@@ -155,22 +155,22 @@ __weak void StartDefaultTask(void *argument)
   /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_StartTask02 */
+/* USER CODE BEGIN Header_GatewayTask */
 /**
 * @brief Function implementing the GatewayTask_ thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartTask02 */
-__weak void StartTask02(void *argument)
+/* USER CODE END Header_GatewayTask */
+__weak void GatewayTask(void *argument)
 {
-  /* USER CODE BEGIN StartTask02 */
+  /* USER CODE BEGIN GatewayTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END StartTask02 */
+  /* USER CODE END GatewayTask */
 }
 
 /* USER CODE BEGIN Header_ClusterTask */
