@@ -1,8 +1,10 @@
 {
-    "cmake.cmakePath": "cmake",
-    "cmake.configureArgs": [],
+    "cmake.cmakePath": "cube-cmake",
+    "cmake.configureArgs": [
+        "-DCMAKE_COMMAND=cube-cmake"
+    ],
     "cmake.preferredGenerators": [
-        "Unix Makefiles"
+        "Ninja"
     ],
     "stm32cube-ide-clangd.path": "cube",
     "stm32cube-ide-clangd.arguments": [
