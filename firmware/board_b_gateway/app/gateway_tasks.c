@@ -155,9 +155,14 @@ void LoggerTask(void *argument)
     for (;;) {
         if (s_status_log_enabled != 0U) {
             GatewaySafetyDiagnostic_t safety;
-            GatewaySafetyBridge_GetDiagnostic(&safety);
+            GatewayEngineBridge_State_t engine_state = {0};
 
-            log_printf("[GW] RX1=%lu TX1=%lu RX2=%lu TX2=%lu busy=%lu err=%lu warn=%u adas=%u risk=%u fault=0x%02X dtc=0x%02X\r\n",
+            GatewaySafetyBridge_GetDiagnostic(&safety);
+            GatewayEngineBridge_GetState(&engine_state);
+
+            log_printf("[GW] RX1=%lu TX1=%lu RX2=%lu TX2=%lu busy=%lu err=%lu warn=%u "
+                       "adas=%u risk=%u fault=0x%02X dtc=0x%02X "
+                       "rpm=%u speed=%u coolant=%u ign=%u alive=%u active=%u age=%lu\r\n",
                        (unsigned long)can1RxCount,
                        (unsigned long)can1TxCount,
                        (unsigned long)can2RxCount,
@@ -168,7 +173,14 @@ void LoggerTask(void *argument)
                        (unsigned int)safety.valid,
                        (unsigned int)safety.risk_level,
                        (unsigned int)safety.active_fault_bitmap,
-                       (unsigned int)safety.dtc_bitmap);
+                       (unsigned int)safety.dtc_bitmap,
+                       (unsigned int)engine_state.rpm,
+                       (unsigned int)engine_state.speed_kmh,
+                       (unsigned int)engine_state.coolant_c,
+                       (unsigned int)engine_state.ign_on,
+                       (unsigned int)engine_state.board_a_alive,
+                       (unsigned int)engine_state.active,
+                       (unsigned long)engine_state.age_ms);
         }
         osDelay(1000U);
     }

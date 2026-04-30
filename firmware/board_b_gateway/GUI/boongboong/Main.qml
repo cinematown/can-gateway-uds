@@ -389,7 +389,7 @@ ApplicationWindow {
                     y: 130
                     width: parent.width - 36
                     height: 14
-                    value: Math.min(1, gateway.rpm / 7000)
+                    value: Math.max(0, Math.min(1, gateway.rpm / 6000))
                 }
 
                 SmallTile {

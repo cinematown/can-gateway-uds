@@ -15,7 +15,7 @@
               ┌─────────────▼─────────────┐
               │  보드B (Central Gateway)  │
               │  - 라우팅 테이블          │
-              │  - 이상 감지 (RPM>5500)   │
+              │  - 이상 감지 (RPM>=5000)  │
               │  - 트래픽 로거 (UART)     │
               │  - VW 계기판 HMI          │
               └─────────────┬─────────────┘
@@ -71,7 +71,7 @@
 2. 보드A ADC → RPM 계산 → CAN1 `0x280` 메시지 50ms 주기 송신
 3. 보드B CAN1 RX 콜백 → `can1_rx_queue` push
 4. `GatewayTask`가 Queue pop → 라우팅 테이블 조회
-5. 이상 감지: RPM > 5500 → `s_warning_active = 1`, CAN2 `0x480` 송신
+5. 이상 감지: RPM >= 5000 → `s_warning_active = 1`, RPM < 4500 → `s_warning_active = 0`
 6. CAN2로 `0x280` 포워딩 → 계기판이 수신하여 바늘 움직임
 7. 보드D가 도어/방향지시등/하이빔/안개등 상태를 `0x390`으로 송신
 8. 보드B가 `0x390`을 CAN2로 포워딩

@@ -168,3 +168,21 @@ void GatewayEngineBridge_Task10ms(void)
         next_bremse_1_tick = now + CLUSTER_BREMSE_1_PERIOD_MS;
     }
 }
+
+void GatewayEngineBridge_GetState(GatewayEngineBridge_State_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    uint32_t now = osKernelGetTickCount();
+    uint32_t age = tick_elapsed(now, s_cluster_input.last_rx_tick);
+
+    state->rpm = s_cluster_input.rpm;
+    state->speed_kmh = s_cluster_input.speed_kmh;
+    state->coolant_c = s_cluster_input.coolant_c;
+    state->board_a_alive = s_cluster_input.board_a_alive;
+    state->ign_on = s_cluster_input.ign_on ? 1U : 0U;
+    state->active = is_input_active(now) ? 1U : 0U;
+    state->age_ms = age;
+}

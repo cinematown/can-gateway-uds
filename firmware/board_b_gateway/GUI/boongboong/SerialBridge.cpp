@@ -232,7 +232,7 @@ void SerialBridge::processLine(const QString &line)
 void SerialBridge::parseGatewayStatus(const QString &line)
 {
     static const QRegularExpression regex(
-        R"(\[GW\]\s+RX1=(\d+)\s+TX1=(\d+)\s+RX2=(\d+)\s+TX2=(\d+)\s+busy=(\d+)\s+err=(\d+)\s+warn=(\d+))");
+        R"(\[GW\]\s+RX1=(\d+)\s+TX1=(\d+)\s+RX2=(\d+)\s+TX2=(\d+)\s+busy=(\d+)\s+err=(\d+)\s+warn=(\d+)(?:\s+rpm=(\d+)\s+speed=(\d+)\s+coolant=(\d+)\s+ign=(\d+)\s+alive=(\d+)\s+active=(\d+)\s+age=(\d+))?)");
     const QRegularExpressionMatch match = regex.match(line);
     if (!match.hasMatch()) {
         return;
@@ -245,6 +245,16 @@ void SerialBridge::parseGatewayStatus(const QString &line)
     m_busy = match.captured(5).toInt();
     m_errors = match.captured(6).toInt();
     m_warning = match.captured(7).toInt() != 0;
+
+    if (!match.captured(8).isEmpty()) {
+        m_rpm = match.captured(8).toInt();
+        m_speed = match.captured(9).toInt();
+        m_coolant = match.captured(10).toInt();
+        m_ignition = match.captured(11).toInt() != 0;
+        m_alive = match.captured(12).toInt();
+        m_lastEngineRx = match.captured(14) + " ms";
+    }
+
     emit dataChanged();
 }
 
