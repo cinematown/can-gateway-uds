@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 3.22)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+set(CMAKE_PROJECT_NAME stm32f429zi_cli)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+project(${CMAKE_PROJECT_NAME})
+message("Build type: " ${CMAKE_BUILD_TYPE})
+
+enable_language(C ASM)
+
+add_executable(${CMAKE_PROJECT_NAME})
+add_subdirectory(cmake/stm32cubemx)
+
+target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE)
+
+# ========================================================
+# 보드별 선택 빌드
+#   cmake -B build -DBOARD_ROLE=BOARD_C_UDS
+#   cmake -B build -DBOARD_ROLE=BOARD_A_ENGINE
+#   cmake -B build -DBOARD_ROLE=BOARD_B_GATEWAY
+# ========================================================
+set(BOARD_ROLE "BOARD_C_UDS" CACHE STRING "Select board role")
+set_property(CACHE BOARD_ROLE PROPERTY STRINGS BOARD_A_ENGINE BOARD_B_GATEWAY BOARD_C_UDS)
+
+file(GLOB_RECURSE COMMON_SOURCES CONFIGURE_DEPENDS "common/*.c")
+
+if(BOARD_ROLE STREQUAL "BOARD_A_ENGINE")
+    set(BOARD_DIR "board_a_engine")
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BOARD_A_ENGINE)
+    message(STATUS "[Build Mode] Board A Engine")
+elseif(BOARD_ROLE STREQUAL "BOARD_B_GATEWAY")
+    set(BOARD_DIR "board_b_gateway")
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BOARD_B_GATEWAY)
+    message(STATUS "[Build Mode] Board B Gateway")
+elseif(BOARD_ROLE STREQUAL "BOARD_C_UDS")
+    set(BOARD_DIR "board_c_uds")
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BOARD_C_UDS)
+    message(STATUS "[Build Mode] Board C UDS Server")
+else()
+    message(FATAL_ERROR "Unknown BOARD_ROLE: ${BOARD_ROLE}")
+endif()
+
+file(GLOB_RECURSE BOARD_SOURCES CONFIGURE_DEPENDS "${BOARD_DIR}/*.c")
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    ${COMMON_SOURCES}
+    ${BOARD_SOURCES}
+)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    common
+    ${BOARD_DIR}
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME}
+    stm32cubemx
+)
